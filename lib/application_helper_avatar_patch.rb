@@ -19,7 +19,7 @@
 
   module ApplicationHelperAvatarPatch
 
-    def self.included(base) # :nodoc:    
+    def self.included(base) # :nodoc:
       base.class_eval do
         alias_method :avatar_without_local, :avatar
         alias_method :avatar, :avatar_with_local
@@ -28,18 +28,21 @@
 
 
 		def avatar_with_local(user, options = { })
-			puts '--------'
 			if user.is_a?(User)then
 				av = user.attachments.find_by_description 'avatar'
 				if av then
-					image_url = url_for :only_path => true, :controller => 'account', :action => 'get_avatar', :id => user
-					options[:size] = "64" unless options[:size]
-					title = "#{user.name}"
-					return "<img class=\"gravatar\" title=\"#{title}\" width=\"#{options[:size]}\" height=\"#{options[:size]}\" src=\"#{image_url}\" />".html_safe
+				options[:width] = options[:size] || GravatarHelper::DEFAULT_OPTIONS[:size] unless options[:width]
+				options[:height] = options[:size] || GravatarHelper::DEFAULT_OPTIONS[:size] unless options[:height]
+				if ActiveRecord::VERSION::MAJOR >= 4
+					options[:size] = "#{options[:width]}x#{options[:height]}"
+					options.except!(:width, :height)
 				end
+				image_url = url_for :only_path => true, :controller => 'account', :action => 'get_avatar', :id => user
+				return image_tag(image_url, options.merge(class: "gravatar"))
 			end
-			avatar_without_local(user, options)
 		end
+		avatar_without_local(user, options)
+	end
 
 
   end
